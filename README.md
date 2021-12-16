@@ -25,7 +25,7 @@ All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the he
 
 ## Type Declarations
 
-In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Types` module is provided to be opened in code files which exposes types like `'a list` and other collections.
+In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Types` module is provided to be opened in code files which exposes types like `'a queue` and other collections.
 
 ## Build Process
 
