@@ -21,7 +21,7 @@ This library includes the following custom modules:
 
 With respect to the exposed parts of the standard library, these are all handled in the `FromStdlib` module, which redefines some definitions directly from the standard library so that this file can be safely included separately, exposing only the desired functions. As such, it is recommended that this file is opened in the code that uses this library, while others are not, and referenced from the module level instead (with one additional exception of `Types`, mentioned in the following section).
 
-All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the headaches in exposing functions like `.printf` which have many dependencies). Linking is also done without `-nopervasives` so that `fromStdlib.cmx` can find the corresponding functions. Hence any new files added to the project are recommended to be compiled separately with `nopervasives` and then linked via the `.cmx` file.
+All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the headaches in exposing functions like `printf` which have many dependencies). Linking is also done without `-nopervasives` so that `fromStdlib.cmx` can find the corresponding functions. Hence any new files added to the project are recommended to be compiled separately with `nopervasives` and then linked via the `.cmx` file.
 
 ## Type Declarations
 
