@@ -130,7 +130,7 @@ let filter_rev_tr (f : 'a -> bool) (ls : 'a list) : 'a list =
 
 let rec find_helper (f : 'a -> bool) (ls : 'a list) (index : int) : ('a * int) option = 
     match ls with
-    | x :: xs -> if f x then Some (x, index) else find_helper f xs (1 + index)
+    | x :: xs -> if f x then Some (x, index) else find_helper f xs Int.(1 + index)
     | [] -> None 
 
 let find (f : 'a -> bool) (ls : 'a list) : ('a * int) option =
@@ -140,7 +140,7 @@ let rec initialize_helper (f : int -> 'a) (length : int) (index : int) (acc : 'a
     if length = index then
         acc
     else
-        initialize_helper f length (index + 1) ((f index) :: acc)
+        initialize_helper f length Int.(index + 1) ((f index) :: acc)
 
 let initialize (f : int -> 'a) (length : int) : 'a list =
     initialize_helper f length 0 []

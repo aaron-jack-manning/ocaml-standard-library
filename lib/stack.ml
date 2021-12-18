@@ -19,7 +19,7 @@ let empty : 'a stack = Empty
 let rec height_helper (height : int) (st : 'a stack) =
     match st with
     | Empty -> height
-    | Stacked (x, xs) -> height_helper (height + 1) xs
+    | Stacked (x, xs) -> height_helper (Int.(height + 1)) xs
 
 let height (st : 'a stack) : int =
     height_helper 0 st

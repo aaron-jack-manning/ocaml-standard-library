@@ -111,7 +111,7 @@ module RBTreeSet (M : SetSpecification) : RBTreeSet with type member = M.member 
         match set with
         | Leaf -> 0
         | Branch (_, _, left, right) ->
-            cardinality left + cardinality right + 1
+            Int.(cardinality left + cardinality right + 1)
 end
 
 (* Planned Functions:
