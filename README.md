@@ -10,6 +10,8 @@ This is very bespoke for my requirements, and only something I do/use when I am 
 
 This library includes the following custom modules:
 
+- Int (exposure of basic integer arithmetic functions)
+- Float (exposure of basic float arithmetic functions)
 - List (functional list data structure)
 - Queue (functional queue implemented as two lists)
 - Set (functional set implemented as a red-black tree)
