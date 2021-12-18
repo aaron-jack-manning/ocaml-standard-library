@@ -11,3 +11,10 @@ type 'a stack =
 type 'a tree =
     | Leaf
     | Branch of 'a * 'a tree list
+
+
+let id (x : 'a) = x
+
+let ( >> ) f g x = g (f x)
+
+let ( << ) g f x = g (f x)

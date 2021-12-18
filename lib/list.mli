@@ -1,4 +1,4 @@
-open Types
+open Exposed
 
 (** The empty list *)
 val empty : 'a list

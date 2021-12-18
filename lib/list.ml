@@ -1,5 +1,5 @@
 open FromStdlib
-open Types
+open Exposed
 
 let empty : 'a list = []
 

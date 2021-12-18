@@ -1,5 +1,5 @@
 open List
-open Types
+open Exposed
 
 let enqueue (a : 'a) (qu : 'a queue) : 'a queue =
     { qu with front = a :: qu.back }

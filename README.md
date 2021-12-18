@@ -12,6 +12,7 @@ This library includes the following custom modules:
 
 - Int (exposure of basic integer arithmetic functions)
 - Float (exposure of basic float arithmetic functions)
+- Option (functions for working with the option monad)
 - List (functional list data structure)
 - Queue (functional queue implemented as two lists)
 - Set (functional set implemented as a red-black tree)
@@ -21,13 +22,13 @@ This library includes the following custom modules:
 
 ## Exposure of Functions from Standard Library
 
-With respect to the exposed parts of the standard library, these are all handled in the `FromStdlib` module, which redefines some definitions directly from the standard library so that this file can be safely included separately, exposing only the desired functions. As such, it is recommended that this file is opened in the code that uses this library, while others are not, and referenced from the module level instead (with one additional exception of `Types`, mentioned in the following section).
+With respect to the exposed parts of the standard library, these are all handled in the `FromStdlib` module, which redefines some definitions directly from the standard library so that this file can be safely included separately, exposing only the desired functions. As such, it is recommended that this file is opened in the code that uses this library, while others are not, and referenced from the module level instead (with one additional exception of `Exposed`, mentioned in the following section).
 
 All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the headaches in exposing functions like `printf` which have many dependencies). Linking is also done without `-nopervasives` so that `fromStdlib.cmx` can find the corresponding functions. Hence any new files added to the project are recommended to be compiled separately with `nopervasives` and then linked via the `.cmx` file.
 
-## Type Declarations
+## Type Declarations and General Functions
 
-In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Types` module is provided to be opened in code files which exposes types like `'a queue` and other collections.
+In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Exposed` module is provided to be opened in code files which exposes types like `'a queue` and other collections. `Exposed` also includes generic operators that should be opened file wide, such as function composition (`>>`).
 
 ## Build Process
 

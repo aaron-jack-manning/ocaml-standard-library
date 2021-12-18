@@ -1,5 +1,5 @@
 open FromStdlib
-open Types
+open Exposed
 
 let pop (st : 'a stack) : 'a option * 'a stack =
     match st with
