@@ -4,7 +4,7 @@ This repository contains my custom OCaml standard library and build system.
 
 ## Disclaimer:
 
-This is very bespoke for my requirements, and only something I do/use when I am writing code to be read and used by myself. In general, I do not recommend doing something like this, but this repository is here to show off how one can effectively compile an OCaml project without the standard library but still expose the few functions they may need, and in case my implementations of data structures and algorithms may be useful to people learning functional programming.
+This is very bespoke for my requirements, and only something I use when writing code to be read and used by myself. In general, I do not recommend doing something like this. This repository exists because it shows off how one can effectively compile an OCaml project without the standard library but still expose the few functions they may need, a task made remarkably difficult, and because my implementations of some data structures and algorithms may be useful to people new to functional programming.
 
 ## Modules
 
@@ -13,38 +13,92 @@ This library includes the following custom modules:
 - Int (exposure of basic integer arithmetic functions)
 - Float (exposure of basic float arithmetic functions)
 - Option (functions for working with the option monad)
+- Stack (functional stack data structure)
 - List (functional list data structure)
+- Map (functional map implemented as a red-black tree)
 - Queue (functional queue implemented as two lists)
 - Set (functional set implemented as a red-black tree)
-- Stack (functional stack data structure)
 - Tree (functional generic tree type with some general functions to manipulate it)
-- Map (functional map implemented as a red-black tree)
 
 ## Exposure of Functions from Standard Library
 
 With respect to the exposed parts of the standard library, these are all handled in the `FromStdlib` module, which redefines some definitions directly from the standard library so that this file can be safely included separately, exposing only the desired functions. As such, it is recommended that this file is opened in the code that uses this library, while others are not, and referenced from the module level instead (with one additional exception of `Exposed`, mentioned in the following section).
 
-All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the headaches in exposing functions like `printf` which have many dependencies). Linking is also done without `-nopervasives` so that `fromStdlib.cmx` can find the corresponding functions. Hence any new files added to the project are recommended to be compiled separately with `nopervasives` and then linked via the `.cmx` file.
+All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the headaches in exposing functions like `printf` which have many dependencies). Linking is also done without `-nopervasives` so that `fromStdlib.cmx` can find the corresponding functions.
+
+Some functions exist in the `FromStdlib` module which have names starting with `stdlib`. These functions can be called directly, but it is generally recommended they are called from the corresponding module in the custom standard library. They exist in `FromStdlib` to be exposed more neatly elsewhere.
 
 ## Type Declarations and General Functions
 
-In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Exposed` module is provided to be opened in code files which exposes types like `'a queue` and other collections. `Exposed` also includes generic operators that should be opened file wide, such as function composition (`>>`).
+In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Exposed` module is provided to be opened in code files which exposes types like `'a queue` and other collections. `Exposed` also includes generic operators that should be opened file wide, such as function composition (`>>`). This should always be opened at the top of project files.
 
 ## Build Process
 
-Since I wanted to compile with some aspects of the Standard library (or import the source files separately), the build process is a little complicated. A makefile is included with the following commands set up:
+Since I wanted to compile with some aspects of the Standard library (or import the source files separately), the build process is a little complicated. Two makefiles are included, one within the `lib` folder (which should not be edited) and one at the top level which calls commands in the makefile within `lib`. From the top level, the following commands should be used to build and manage projects:
 
 - `make build` to build all files, including main.
 - `make clean` which removes all auto-generated files, leaving only source code behind.
-- `make mostlyclean` which remaves all auto-generated files except the main executable, also leaving source code behind.
-- `make run` which runs the executable created by `make build`.
-- `make install` which runs the equivalent of `make build`, `make mostlyclean` and `make run` in sequence.
+- `make mostlyclean` which removes all auto-generated files, except `program`, the final executable.
+- `make run` which runs the executable `program`, created by `make build`.
 
+In general, a successful build process would be:
 
-Note that incremental builds are not set up, and that some `.mli` files are autogenerated but most are not, and therefore if attempting to edit the standard library code for your own purposes, I recommend running `make clean` first, so you don't attempt to add code to `.mli` files that will be autogenerated and overwritten.
+```
+$ make build
+$ make mostlyclean
+$ make run
+```
+
+Other commands exist to clean just the project files or just the standard library. These are `make topmostlyclean`, `make topclean` and `make stdlibclean`.
 
 Also take note of the fact that I typically compile everything with `-S` and `-O3` for assembly code files and flambda optimization correspondingly, and this can obviously be changed depending on requirements, as can the use of `ocamlopt` instead of `ocamlc` but if that is changed the final linking will need to be done with `.cmo` instead of `.cmx` files.
 
+## Adding New Modules to the Project
+
+To add new modules to the project, I recommend following the method used with `main.ml` in the top level makefile.
+
+In that case, there are three parts to successful compilation. The first two are specific to the module:
+
+```
+$(GENERATE_MLI) main.ml > main.mli
+```
+
+which autogenerates the `.mli` file. Obviously if the `.mli` should not be autogenerated and instead authored individually, as is recommended in most cases, omit this line.
+
+```
+$(COMPILE) main.mli main.ml
+```
+
+while compiles the `.mli` and `.ml` files with the standard flags.
+
+Then, any new files which are added to the compilation steps need to be included in the linking, by adding the lowercased module name, followed by a `.cmx` extension, before `main.cmx` in the following line:
+
+```
+ocamlopt -O3 $(STDLIB_FILES) main.cmx -o program
+```
+
+## Adding New Modules to the Library
+
+All new files added to the library need an `.ml` and `.mli` file in the `lib` folder.
+
+Once the files exist, the compilation step needs to be added to the `makefile` within `lib` by preceeding the `.mli` and `.ml` files with `$(STANDARD_COMPILE)`. For example:
+
+```
+$(STANDARD_COMPILE) newModule.mli newModule.ml
+```
+
+Then the file needs to be added to the list of standard library files for the top level `makefile` to find them. This is the first variable named `STDLIB_FILES`. All references are preceeded by `lib/` so they can be found within the correct folder and use the `.cmx` extension, as only the compiled files need to be linked.
+
 ## The Core Library
 
-One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library, documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library. This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
+One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library (not to be confused with Jane Street's Core), documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library. This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
+
+## Remaining to Expose from Actual Standard Library
+
+The following modules include functions that I still intend on adding by exposing them from the actual OCaml standard library, but haven't gotten around to doing it yet:
+
+- Array
+- Scanf
+- Random
+
+In addition to these, I plan on constructing a file IO library, from the functions in the existing standard library such as `open_in` and `close_in` for example (which are in `pervasives.ml` in the original library).
