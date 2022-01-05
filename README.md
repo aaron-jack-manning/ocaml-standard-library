@@ -102,3 +102,7 @@ The following modules include functions that I still intend on adding by exposin
 - Random
 
 In addition to these, I plan on constructing a file IO library, from the functions in the existing standard library such as `open_in` and `close_in` for example (which are in `pervasives.ml` in the original library).
+
+## Tests
+
+Unit tests are also planned for all collection modules, but have not been written yet.
