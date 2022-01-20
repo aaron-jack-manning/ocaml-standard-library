@@ -4,20 +4,25 @@ This repository contains my custom OCaml standard library and build system.
 
 ## Disclaimer:
 
-This is very bespoke for my requirements, and only something I use when writing code to be read and used by myself. In general, I do not recommend doing something like this. This repository exists because it shows off how one can effectively compile an OCaml project without the standard library but still expose the few functions they may need, a task made remarkably difficult, and because my implementations of some data structures and algorithms may be useful to people new to functional programming.
+This is very bespoke for my requirements, and only something I use when writing code to be read and used by myself. In general, I do not recommend doing something like this. This repository exists because it shows off how one can effectively compile an OCaml project without the standard library but still expose the few functions they may need, a task made remarkably difficult by the way the compiler works, and because my implementations of some data structures and algorithms may be useful to people new to functional programming.
+
+Also note that I use WSL for all OCaml programming, and this is my recommendation for Windows users. The only software dependencies for running and debugging code in this project are the OCaml compiler and make.
 
 ## Modules
 
 This library includes the following custom modules:
 
-- Int (exposure of basic integer arithmetic functions)
-- Float (exposure of basic float arithmetic functions)
-- Option (functions for working with the option monad)
-- Stack (functional stack data structure)
+- Bool (for basic operations on booleans)
+- Char (for basic operations on characters)
+- Float (for basic operations on floating point numbers)
+- Int (for basic operations on integers)
 - List (functional list data structure)
 - Map (functional map implemented as a red-black tree)
+- Option (functions for working with the option monad)
 - Queue (functional queue implemented as two lists)
 - Set (functional set implemented as a red-black tree)
+- Stack (functional stack data structure)
+- String (for basic operations on strings)
 - Tree (functional generic tree type with some general functions to manipulate it)
 
 ## Exposure of Functions from Standard Library
@@ -32,52 +37,48 @@ Some functions exist in the `FromStdlib` module which have names starting with `
 
 In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Exposed` module is provided to be opened in code files which exposes types like `'a queue` and other collections. `Exposed` also includes generic operators that should be opened file wide, such as function composition (`>>`). This should always be opened at the top of project files.
 
-## Build Process
+## Compiler Options
 
-Since I wanted to compile with some aspects of the Standard library (or import the source files separately), the build process is a little complicated. Two makefiles are included, one within the `lib` folder (which should not be edited) and one at the top level which calls commands in the makefile within `lib`. From the top level, the following commands should be used to build and manage projects:
+I typically compile everything with the `-O3` flag for flambda optimization, and this can obviously be changed depending on requirements, as can the use of `ocamlopt` instead of `ocamlc` but if that is changed the final linking will need to be done with `.cmo` instead of `.cmx` files.
 
-- `make build` to build all files, including main.
-- `make clean` which removes all auto-generated files, leaving only source code behind.
-- `make mostlyclean` which removes all auto-generated files, except `program`, the final executable.
-- `make run` which runs the executable `program`, created by `make build`.
+## Building the Standard Library
 
-In general, a successful build process would be:
+Within the `lib` folder a makefile is included so that the standard library can be built using `make build`. This will generate a file called `library.cmxa` which can then be used in projects as described in the next section. In general, build the library once and do not clean it before creating a larger project.
 
-```
-$ make build
-$ make mostlyclean
-$ make run
-```
+## Creating a Project Using This Library
 
-Other commands exist to clean just the project files or just the standard library. These are `make topmostlyclean`, `make topclean` and `make stdlibclean`.
+In the root folder of this repository, a makefile is provided to be used for projects that make use of this standard library.
 
-Also take note of the fact that I typically compile everything with `-S` and `-O3` for assembly code files and flambda optimization correspondingly, and this can obviously be changed depending on requirements, as can the use of `ocamlopt` instead of `ocamlc` but if that is changed the final linking will need to be done with `.cmo` instead of `.cmx` files.
+To create a new project, simply create the file you wish to add in the top level. For example, let's say we are creating a file called `main.ml`.
 
-## Adding New Modules to the Project
-
-To add new modules to the project, I recommend following the method used with `main.ml` in the top level makefile.
-
-In that case, there are three parts to successful compilation. The first two are specific to the module:
+We first create the file in the root directory, and then change the build section of makefile from this:
 
 ```
-$(GENERATE_MLI) main.ml > main.mli
+build:
+	ocamlopt $(CUSTOM_LIBRARY_LOCATION)/library.cmxa -o program
 ```
 
-which autogenerates the `.mli` file. Obviously if the `.mli` should not be autogenerated and instead authored individually, as is recommended in most cases, omit this line.
+to this:
+
+```
+build:
+    $(COMPILE) main.ml
+
+	ocamlopt $(CUSTOM_LIBRARY_LOCATION)/library.cmxa main.cmx -o program
+```
+
+Any additional files that need to be added can be added in the same way, by adding the line to compile and adding the `.cmx` file to the final step.
+
+If adding in other files, order them within both places according to the desired file order, and if adding an `.mli` file with the `.ml` file, simply compile with the `.mli` file as well, before the `.ml` file. For example:
 
 ```
 $(COMPILE) main.mli main.ml
 ```
 
-while compiles the `.mli` and `.ml` files with the standard flags.
+This leaves a project which can be built with `make build`, run with `make run` and cleaned with `make clean`. `make install` is also an implemented command which builds the project and cleans all except the executable.
 
-Then, any new files which are added to the compilation steps need to be included in the linking, by adding the lowercased module name, followed by a `.cmx` extension, before `main.cmx` in the following line:
 
-```
-ocamlopt -O3 $(STDLIB_FILES) main.cmx -o program
-```
-
-## Adding New Modules to the Library
+## Adding New Modules to the Standard Library
 
 All new files added to the library need an `.ml` and `.mli` file in the `lib` folder.
 
@@ -87,21 +88,26 @@ Once the files exist, the compilation step needs to be added to the `makefile` w
 $(STANDARD_COMPILE) newModule.mli newModule.ml
 ```
 
-Then the file needs to be added to the list of standard library files for the top level `makefile` to find them. This is the first variable named `STDLIB_FILES`. All references are preceeded by `lib/` so they can be found within the correct folder and use the `.cmx` extension, as only the compiled files need to be linked.
+Then the final step within `build` also needs to be altered to include the corresponding `.cmx` file.
+
+```
+ocamlopt -a fromStdlib.cmx exposed.cmx int.cmx float.cmx option.cmx stack.cmx list.cmx map.cmx queue.cmx set.cmx tree.cmx string.cmx newModule.cmx -o $(LIB_NAME).cmxa
+```
+
+Just as with the project in the top level, file order should be consistent across compile lines and this final line.
 
 ## The Core Library
 
 One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library (not to be confused with Jane Street's Core), documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library. This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
 
-## Remaining to Expose from Actual Standard Library
+## Planned Changes
 
-The following modules include functions that I still intend on adding by exposing them from the actual OCaml standard library, but haven't gotten around to doing it yet:
+The following modules are some that I plan on introducing in future iterations of this project:
 
-- Array
-- Scanf
-- Random
-
-In addition to these, I plan on constructing a file IO library, from the functions in the existing standard library such as `open_in` and `close_in` for example (which are in `pervasives.ml` in the original library).
+- Array: for operations with mutable arrays.
+- Random: for random number generation.
+- File: for file IO.
+- Input: for command line inputs and arguments.
 
 ## Tests
 

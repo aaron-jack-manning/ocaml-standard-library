@@ -4,6 +4,20 @@ let failwith = Stdlib.failwith
 let printf = Printf.printf
 
 external ( |> ) : 'a -> ('a -> 'b) -> 'b = "%revapply"
+external ignore : 'a -> unit = "%ignore"
+
+
+external stdlib_int_of_char : char -> int = "%identity"
+let stdlib_char_of_int = char_of_int
+let stdlib_string_of_bool = string_of_bool
+let stdlib_bool_of_string = bool_of_string
+let stdlib_bool_of_string_opt = bool_of_string_opt
+let stdlib_string_of_int = string_of_int
+external stdlib_int_of_string : string -> int = "caml_int_of_string"
+let stdlib_int_of_string_opt = int_of_string_opt
+let stdlib_string_of_float = string_of_float
+external stdlib_float_of_string : string -> float = "caml_float_of_string"
+let stdlib_float_of_string_opt = float_of_string_opt
 
 external stdlib_plus_int : int -> int -> int = "%addint"
 external stdlib_minus_int : int -> int -> int = "%subint"
@@ -43,3 +57,6 @@ external ( >= ) : 'a -> 'a -> bool = "%greaterequal"
 external not : bool -> bool = "%boolnot"
 external ( or ) : bool -> bool -> bool = "%sequor"
 external ( & ) : bool -> bool -> bool = "%sequand"
+
+
+
