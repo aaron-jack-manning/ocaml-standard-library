@@ -14,6 +14,7 @@ This library includes the following custom modules:
 
 - Bool (for basic operations on booleans)
 - Char (for basic operations on characters)
+- Fatal (for throwing exceptions, and making assertions)
 - Float (for basic operations on floating point numbers)
 - Int (for basic operations on integers)
 - List (functional list data structure)
@@ -23,19 +24,16 @@ This library includes the following custom modules:
 - Set (functional set implemented as a red-black tree)
 - Stack (functional stack data structure)
 - String (for basic operations on strings)
+- Terminal (for terminal IO)
 - Tree (functional generic tree type with some general functions to manipulate it)
 
 ## Exposure of Functions from Standard Library
 
-With respect to the exposed parts of the standard library, these are all handled in the `FromStdlib` module, which redefines some definitions directly from the standard library so that this file can be safely included separately, exposing only the desired functions. As such, it is recommended that this file is opened in the code that uses this library, while others are not, and referenced from the module level instead (with one additional exception of `Exposed`, mentioned in the following section).
-
-All files are compiled with `-nopervasives` except `FromStdlib` (to avoid the headaches in exposing functions like `printf` which have many dependencies). Linking is also done without `-nopervasives` so that `fromStdlib.cmx` can find the corresponding functions.
-
-Some functions exist in the `FromStdlib` module which have names starting with `stdlib`. These functions can be called directly, but it is generally recommended they are called from the corresponding module in the custom standard library. They exist in `FromStdlib` to be exposed more neatly elsewhere.
+Some functions from the OCaml standard library are exposed through this library. They are handled by the `FromStdlib` module which SHOULD NOT be accessed directly in projects using this library. All functions and types from this module that are exposed to be used in projects are redefined in another module and should be accessed there. The reason for this module is to allow the rest of the modules to be compile with the `-nopervasives` flag yet still access a few of the official OCaml standard module functions.
 
 ## Type Declarations and General Functions
 
-In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, a `Exposed` module is provided to be opened in code files which exposes types like `'a queue` and other collections. `Exposed` also includes generic operators that should be opened file wide, such as function composition (`>>`). This should always be opened at the top of project files.
+In order to prevent duplicate definitions of common types like collections, but still allow things like list literals to work, and to prevent the need of a type annotation at the module level, the `General` module is provided to be opened in code files which exposes types like `'a queue` and other collections. `General` also includes generic operators that should be opened file wide, such as function composition (`>>`). This should always be opened at the top of project files.
 
 ## Compiler Options
 
@@ -51,7 +49,7 @@ In the root folder of this repository, a makefile is provided to be used for pro
 
 To create a new project, simply create the file you wish to add in the top level. For example, let's say we are creating a file called `main.ml`.
 
-We first create the file in the root directory, and then change the build section of makefile from this:
+We first create the file in the root directory, add the line `open General` to the top of the file, and then change the build section of makefile from this:
 
 ```
 build:
@@ -98,7 +96,7 @@ Just as with the project in the top level, file order should be consistent acros
 
 ## The Core Library
 
-One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library (not to be confused with Jane Street's Core), documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library. This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
+One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library (not to be confused with Jane Street's Core), documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library (with the benefit of list literals still functioning properly). This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
 
 ## Planned Changes
 
@@ -107,7 +105,10 @@ The following modules are some that I plan on introducing in future iterations o
 - Array: for operations with mutable arrays.
 - Random: for random number generation.
 - File: for file IO.
-- Input: for command line inputs and arguments.
+
+I also intend on modifying the following modules:
+
+- Terminal: this module still needs input functions.
 
 ## Tests
 
