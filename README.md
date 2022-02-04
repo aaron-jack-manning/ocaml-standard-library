@@ -12,15 +12,18 @@ Also note that I use WSL for all OCaml programming, and this is my recommendatio
 
 This library includes the following custom modules:
 
+- Array (for operations on mutable arrays)
 - Bool (for basic operations on booleans)
 - Char (for basic operations on characters)
 - Fatal (for throwing exceptions, and making assertions)
+- File (for file IO)
 - Float (for basic operations on floating point numbers)
 - Int (for basic operations on integers)
 - List (functional list data structure)
 - Map (functional map implemented as a red-black tree)
 - Option (functions for working with the option monad)
 - Queue (functional queue implemented as two lists)
+- Random (for pseudorandom generation)
 - Set (functional set implemented as a red-black tree)
 - Stack (functional stack data structure)
 - String (for basic operations on strings)
@@ -29,7 +32,7 @@ This library includes the following custom modules:
 
 ## Exposure of Functions from Standard Library
 
-Some functions from the OCaml standard library are exposed through this library. They are handled by the `FromStdlib` module which SHOULD NOT be accessed directly in projects using this library. All functions and types from this module that are exposed to be used in projects are redefined in another module and should be accessed there. The reason for this module is to allow the rest of the modules to be compile with the `-nopervasives` flag yet still access a few of the official OCaml standard module functions.
+Some functions from the OCaml standard library are exposed through this library, for random number generation, file and terminal IO, and arrays. They are handled by direct reference to the `Stdlib` module and therefore all modules are compiled with the `-nopervasives` flag.
 
 ## Type Declarations and General Functions
 
@@ -89,7 +92,7 @@ $(STANDARD_COMPILE) newModule.mli newModule.ml
 Then the final step within `build` also needs to be altered to include the corresponding `.cmx` file.
 
 ```
-ocamlopt -a fromStdlib.cmx exposed.cmx int.cmx float.cmx option.cmx stack.cmx list.cmx map.cmx queue.cmx set.cmx tree.cmx string.cmx newModule.cmx -o $(LIB_NAME).cmxa
+ocamlopt -a exposed.cmx int.cmx float.cmx option.cmx stack.cmx list.cmx map.cmx queue.cmx set.cmx tree.cmx string.cmx newModule.cmx -o $(LIB_NAME).cmxa
 ```
 
 Just as with the project in the top level, file order should be consistent across compile lines and this final line.
@@ -98,18 +101,8 @@ Just as with the project in the top level, file order should be consistent acros
 
 One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library (not to be confused with Jane Street's Core), documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library (with the benefit of list literals still functioning properly). This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
 
-## Planned Changes
+## Planned Change;
 
-The following modules are some that I plan on introducing in future iterations of this project:
-
-- Array: for operations with mutable arrays.
-- Random: for random number generation.
-- File: for file IO.
-
-I also intend on modifying the following modules:
-
-- Terminal: this module still needs input functions.
-
-## Tests
+At some point I would like to remove all dependencies on the actual OCaml standard library by way of custom implementations for all the functions that currently reference the `Stdlib` module, and all external functions using code in the standard library.
 
 Unit tests are also planned for all collection modules, but have not been written yet.
