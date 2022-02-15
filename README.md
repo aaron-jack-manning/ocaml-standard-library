@@ -6,7 +6,7 @@ This repository contains my custom OCaml standard library and build system.
 
 This is very bespoke for my requirements, and only something I use when writing code to be read and used by myself. In general, I do not recommend doing something like this. This repository exists because it shows off how one can effectively compile an OCaml project without the standard library but still expose the few functions they may need, a task made remarkably difficult by the way the compiler works, and because my implementations of some data structures and algorithms may be useful to people new to functional programming.
 
-Also note that I use WSL for all OCaml programming, and this is my recommendation for Windows users. The only software dependencies for running and debugging code in this project are the OCaml compiler and make.
+Also note that I use WSL for all OCaml programming, and this is my recommendation for Windows users. The only software dependencies for running and debugging code in this project are the OCaml compiler, gcc and make.
 
 ## Modules
 
@@ -15,6 +15,7 @@ This library includes the following custom modules:
 - Array (for operations on mutable arrays)
 - Bool (for basic operations on booleans)
 - Char (for basic operations on characters)
+- Console (for console IO)
 - Fatal (for throwing exceptions, and making assertions)
 - File (for file IO)
 - Float (for basic operations on floating point numbers)
@@ -23,16 +24,10 @@ This library includes the following custom modules:
 - Map (functional map implemented as a red-black tree)
 - Option (functions for working with the option monad)
 - Queue (functional queue implemented as two lists)
-- Random (for pseudorandom generation)
 - Set (functional set implemented as a red-black tree)
 - Stack (functional stack data structure)
 - String (for basic operations on strings)
-- Terminal (for terminal IO)
 - Tree (functional generic tree type with some general functions to manipulate it)
-
-## Exposure of Functions from Standard Library
-
-Some functions from the OCaml standard library are exposed through this library, for random number generation, file and terminal IO, and arrays. They are handled by direct reference to the `Stdlib` module and therefore all modules are compiled with the `-nopervasives` flag.
 
 ## Type Declarations and General Functions
 
@@ -56,19 +51,18 @@ We first create the file in the root directory, add the line `open General` to t
 
 ```
 build:
-	ocamlopt $(CUSTOM_LIBRARY_LOCATION)/library.cmxa -o program
+	$(COMPILER) -I $(CUSTOM_LIBRARY_LOCATION) library$(AEXT) -o program
 ```
 
 to this:
 
 ```
 build:
-    $(COMPILE) main.ml
-
-	ocamlopt $(CUSTOM_LIBRARY_LOCATION)/library.cmxa main.cmx -o program
+	$(COMPILE) main.ml
+	$(COMPILER) -I $(CUSTOM_LIBRARY_LOCATION) library$(AEXT) main$(EXT) -o program
 ```
 
-Any additional files that need to be added can be added in the same way, by adding the line to compile and adding the `.cmx` file to the final step.
+Any additional files that need to be added can be added in the same way, by adding the line to compile and adding `filename$(EXT)` file to the final step.
 
 If adding in other files, order them within both places according to the desired file order, and if adding an `.mli` file with the `.ml` file, simply compile with the `.mli` file as well, before the `.ml` file. For example:
 
@@ -77,7 +71,6 @@ $(COMPILE) main.mli main.ml
 ```
 
 This leaves a project which can be built with `make build`, run with `make run` and cleaned with `make clean`. `make install` is also an implemented command which builds the project and cleans all except the executable.
-
 
 ## Adding New Modules to the Standard Library
 
@@ -89,10 +82,10 @@ Once the files exist, the compilation step needs to be added to the `makefile` w
 $(STANDARD_COMPILE) newModule.mli newModule.ml
 ```
 
-Then the final step within `build` also needs to be altered to include the corresponding `.cmx` file.
+Then the `COMPILED_FILES` variable also needs to be altered to include the corresponding compiled files.
 
 ```
-ocamlopt -a exposed.cmx int.cmx float.cmx option.cmx stack.cmx list.cmx map.cmx queue.cmx set.cmx tree.cmx string.cmx newModule.cmx -o $(LIB_NAME).cmxa
+COMPILED_FILES = general$(EXT) fatal$(EXT) int$(EXT) float$(EXT) option$(EXT) stack$(EXT) list$(EXT) map$(EXT) queue$(EXT) set$(EXT) tree$(EXT) string$(EXT) char$(EXT) bool$(EXT) console$(EXT) file$(EXT) newModule$(EXT)
 ```
 
 Just as with the project in the top level, file order should be consistent across compile lines and this final line.
@@ -101,8 +94,8 @@ Just as with the project in the top level, file order should be consistent acros
 
 One of the unfortunate consequences of the way OCaml's compilation works, is that there is a library called the core library (not to be confused with Jane Street's Core), documented [here](https://ocaml.org/manual/core.html), which contains some definitions for types and exceptions, yet does not include the code from the stdlib that uses them. When compiling with the `-nopervasives` flag, this is still included but without the standard library. While this makes sense from the perspective of having some fundamental exceptions always available, having types like `list` included makes it very annoying when implemented a custom standard library (with the benefit of list literals still functioning properly). This quirk is why my library has no type definition for `list`, `bool`, `option`, etc. but still uses these types.
 
-## Planned Change;
+## Planned Changes
 
-At some point I would like to remove all dependencies on the actual OCaml standard library by way of custom implementations for all the functions that currently reference the `Stdlib` module, and all external functions using code in the standard library.
+At some point I would like to remove all dependencies on the actual OCaml standard library. Currently the only dependencies that exist are some external C functions with the string and array modules.
 
-Unit tests are also planned for all collection modules, but have not been written yet.
+Unit tests are also planned, but have not been written yet.

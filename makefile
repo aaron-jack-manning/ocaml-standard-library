@@ -1,14 +1,19 @@
+COMPILER = ocamlopt
+EXT = .cmx
+AEXT = .cmxa
+
 CUSTOM_LIBRARY_LOCATION = lib
-COMPILE = ocamlopt -O3 -nopervasives -I $(CUSTOM_LIBRARY_LOCATION) -c
+STANDARD_FLAGS = -nopervasives -O3
+COMPILE = $(COMPILER) $(STANDARD_FLAGS) -I $(CUSTOM_LIBRARY_LOCATION) -c
 
 build:
-	ocamlopt $(CUSTOM_LIBRARY_LOCATION)/library.cmxa -o program
+	$(COMPILER) -I $(CUSTOM_LIBRARY_LOCATION) library$(AEXT) -o program
 
 mostlyclean:
 	rm -f *.o *.a *.s *.cmi *.cmx *.cmxa *.cmo *.cma
 
 clean:
-	rm -f *.o *.a *.s *.cmi *.cmx *.cmxa *.cmo *.cma program
+	rm -f *.o *.a *.s *.so *.cmi *.cmx *.cmxa *.cmo *.cma program
 
 make install:
 	make build
